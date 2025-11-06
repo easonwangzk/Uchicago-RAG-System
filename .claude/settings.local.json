@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(/Users/easonwang/anaconda3/envs/autogen/bin/python:*)"
-    ],
-    "deny": [],
-    "ask": []
-  }
-}
