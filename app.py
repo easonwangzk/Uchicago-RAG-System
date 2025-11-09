@@ -29,6 +29,31 @@ st.set_page_config(
 # Load environment variables
 load_dotenv()
 
+# Helper functions to get config from Streamlit secrets or environment variables
+def get_config(key: str, default: str = "") -> str:
+    """Get configuration from Streamlit secrets first, then fall back to environment variables"""
+    # Try Streamlit secrets first (for cloud deployment)
+    if hasattr(st, 'secrets') and key in st.secrets:
+        return str(st.secrets[key])
+    # Fall back to environment variables (for local development)
+    return os.getenv(key, default)
+
+def get_config_int(key: str, default: int) -> int:
+    """Get integer configuration"""
+    try:
+        value = get_config(key, str(default))
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+def get_config_float(key: str, default: float) -> float:
+    """Get float configuration"""
+    try:
+        value = get_config(key, str(default))
+        return float(value)
+    except (ValueError, TypeError):
+        return default
+
 # Enhanced CSS with modern design system and larger fonts
 def load_custom_css():
     st.markdown("""
@@ -390,15 +415,19 @@ def init_session_state():
 def load_vectordb_cached():
     """Load or build vector database with enhanced error handling"""
     try:
+        # Set API key from config (supports both Streamlit secrets and env vars)
+        api_key = get_config("OPENAI_API_KEY")
+        if api_key:
+            os.environ["OPENAI_API_KEY"] = api_key
         ensure_api_key()
 
-        # Get configuration from environment
-        pdf_path = getenv_str("PDF_PATH", "data/mastersprograminanalytics.pdf")
-        html_dir = getenv_str("HTML_DIR", "data")
-        db_dir = getenv_str("CHROMA_DIR", ".chroma")
-        embed_model = getenv_str("EMBED_MODEL", "text-embedding-3-large")
-        chunk_tokens = getenv_int("CHUNK_TOKENS", 600)
-        overlap_tokens = getenv_int("OVERLAP_TOKENS", 150)
+        # Get configuration from Streamlit secrets or environment variables
+        pdf_path = get_config("PDF_PATH", "data/mastersprograminanalytics.pdf")
+        html_dir = get_config("HTML_DIR", "data")
+        db_dir = get_config("CHROMA_DIR", ".chroma")
+        embed_model = get_config("EMBED_MODEL", "text-embedding-3-large")
+        chunk_tokens = get_config_int("CHUNK_TOKENS", 600)
+        overlap_tokens = get_config_int("OVERLAP_TOKENS", 150)
 
         vectordb = load_or_build_vectordb(
             pdf_path=pdf_path,
@@ -456,9 +485,9 @@ def get_ai_response(question):
             question=question,
             top_k=st.session_state.top_k,
             min_sim=st.session_state.min_sim,
-            chat_model=getenv_str("CHAT_MODEL", "gpt-4o-mini"),
+            chat_model=get_config("CHAT_MODEL", "gpt-4o-mini"),
             temperature=st.session_state.temperature,
-            max_tokens=getenv_int("MAX_TOKENS", 800),
+            max_tokens=get_config_int("MAX_TOKENS", 800),
             verbose=False
         )
 
@@ -547,7 +576,7 @@ def render_sidebar():
         if st.session_state.db_loaded:
             st.success("RAG System: Online")
             st.info(f"Vector DB: 207 chunks loaded")
-            st.info(f"Model: {getenv_str('CHAT_MODEL', 'gpt-4o-mini')}")
+            st.info(f"Model: {get_config('CHAT_MODEL', 'gpt-4o-mini')}")
         else:
             st.error("RAG System: Offline")
 

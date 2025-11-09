@@ -16,6 +16,9 @@ numpy>=2.1.2
 
 python-dotenv>=1.0.1
 
+# Web interface
+streamlit>=1.28.0
+
 # Advanced RAG features
 beautifulsoup4>=4.12.0
 lxml>=5.0.0

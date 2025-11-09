@@ -38,6 +38,9 @@ env/
 # Environment variables
 .env
 
+# Streamlit secrets (local only)
+.streamlit/secrets.toml
+
 # Vector Database
 .chroma/
 *.db
